@@ -1,0 +1,71 @@
+def log_latent_space_com(all_latent_tokens, num_clusters=4):
+            #     """
+            #     Visualizes and logs the latent space using t-SNE and KMeans clustering.
+            #     """
+            #     tsne = cuml.TSNE(n_components=2, perplexity=perplexity)
+            
+            #     try:
+            #         latents_2d = tsne.fit_transform(latents_reshaped)
+
+            #         # Apply KMeans to find clusters in the latent space
+            #         kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+            #         cluster_labels = kmeans.fit_predict(latents_reshaped)
+
+                
+            #     try:
+            #         # Reduce dimensionality with t-SNE
+            #         tsne = TSNE(n_components=2, perplexity=30)
+            #         latent_2d = tsne.fit_transform(all_latent_tokens)
+            
+            #         # Apply KMeans clustering
+            #         kmeans = KMeans(n_clusters=num_clusters, random_state=0)
+            #         cluster_labels = kmeans.fit_predict(all_latent_tokens)
+            #         centroids = kmeans.cluster_centers_
+            #         centroids_2d = tsne.fit_transform(centroids)
+            
+            #         # Define cluster mappings
+            #         cluster_mapping = {0: 'BG', 1: 'ET', 2: 'ED', 3: 'NC'}
+            #         label_names = [cluster_mapping[label] for label in cluster_labels]
+            
+            #         # Define a color palette
+            #         palette = {'BG': 'black', 'ET': 'yellow', 'ED': 'green', 'NC': 'red'}
+            #         markers = {'BG': 'o', 'ET': 's', 'ED': 'D', 'NC': 'X'}
+            
+            #         # Ensure interactive mode is off if running in a script
+            #         plt.ioff()
+            
+            #         # Plot
+            #         plt.figure(figsize=(8, 6))
+            #         sns.scatterplot(x=latent_2d[:, 0], y=latent_2d[:, 1], hue=label_names, palette=palette, style=label_names, markers=markers, alpha=0.7)
+                    
+            #         # Plot centroids
+            #         plt.scatter(centroids_2d[:, 0], centroids_2d[:, 1], c='black', marker='P', s=200, label='Centroids')
+
+            #         y_offset = 0.05  # Adjust this to increase/decrease spacing between counts
+            #         initial_y = 0.95 - y_offset  # Start just below total count
+                    
+            #         # Annotate clusters with counts
+            #         for label in np.unique(cluster_labels):
+            #             count = np.sum(cluster_labels == label)
+            #             plt.text(0.95, initial_y, f'{cluster_mapping[label]} ({count})', fontsize=12, ha='right', va='top', weight='bold', color='black', transform=plt.gca().transAxes, bbox=dict(facecolor='white', alpha=0.7))
+            #             initial_y -= y_offset  # Move down for the next count
+            #             # plt.text(0.95, initial_y, f'{label}: {count}', fontsize=12, weight='bold', 
+            #             #              color=palette[label], ha='right', va='top', transform=plt.gca().transAxes, 
+            #             #              bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+                            
+            #                 # Update the initial_y for the next count
+            
+            #         plt.title("Latent Space Visualization with Clusters")
+            #         plt.xlabel("t-SNE Dim 1")
+            #         plt.ylabel("t-SNE Dim 2")
+            #         plt.legend()
+            #         plt.grid(True)
+            
+            #         # Save the plot
+            #         plt.savefig("latent_space_clusters.png")
+            #         plt.close()
+            
+            #         # Log to Weights & Biases
+            #         wandb.log({"latent_space_clusters": wandb.Image("latent_space_clusters.png")})
+            #     except Exception as e:
+            #         print(f"Error visualizing latent space: {e}")

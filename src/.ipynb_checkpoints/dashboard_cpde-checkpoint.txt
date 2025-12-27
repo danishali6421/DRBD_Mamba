@@ -1,0 +1,202 @@
+import os
+import pandas as pd
+from dash import Dash, dcc, html, Input, Output
+import plotly.express as px
+import plotly.graph_objs as go
+
+# Load CSV
+data_dir = "analysis_outputs"
+
+def get_csv_files():
+    return [f for f in os.listdir(data_dir) if f.endswith(".csv")]
+
+def load_data(file_name):
+    df = pd.read_csv(os.path.join(data_dir, file_name))
+    return df
+
+app = Dash(__name__)
+
+app.layout = html.Div([
+    html.H1("\U0001F9E0 Brain Tumor Segmentation - Full Analysis Dashboard", style={'textAlign': 'center'}),
+
+    html.Div([
+        html.Label("Select Model CSV:"),
+        dcc.Dropdown(id='csv-selector',
+                     options=[{'label': f, 'value': f} for f in get_csv_files()],
+                     value=get_csv_files()[0]),
+        html.Br(),
+        html.Label("Dice Threshold:"),
+        dcc.Slider(id='dice-threshold', min=0.5, max=1.0, step=0.01, value=0.86,
+                   marks={0.5: '0.5', 0.86: '0.86', 1.0: '1.0'}),
+        html.Label("HD95 Threshold (mm):"),
+        dcc.Slider(id='hd95-threshold', min=0, max=20, step=0.5, value=5,
+                   marks={0: '0', 5: '5', 10: '10', 20: '20'})
+    ], style={'width': '60%', 'margin': 'auto'}),
+
+    html.Div(id='summary-cards', style={'display': 'flex', 'justifyContent': 'space-around', 'marginTop': '30px'}),
+
+    html.Div([
+        dcc.Graph(id='dice-donuts'),
+        dcc.Graph(id='hd95-donuts')
+    ], style={'display': 'flex'}),
+
+    html.Div([
+        dcc.Graph(id='volume-hd95'),
+        dcc.Graph(id='volume-dice')
+    ], style={'display': 'flex'}),
+
+    html.Div([
+        dcc.Graph(id='volume-errors-combined')
+    ], style={'display': 'flex'}),
+
+    html.Div([
+        dcc.Graph(id='fpfn-simple-donut-bg'),
+        dcc.Graph(id='fpfn-detailed-donut-bg'),
+        dcc.Graph(id='fpfn-simple-donut-nc'),
+        dcc.Graph(id='fpfn-detailed-donut-nc'),
+        dcc.Graph(id='fpfn-simple-donut-ed'),
+        dcc.Graph(id='fpfn-detailed-donut-ed'),
+        dcc.Graph(id='fpfn-simple-donut-et'),
+        dcc.Graph(id='fpfn-detailed-donut-et')
+    ], style={'display': 'flex', 'flexWrap': 'wrap'}),
+
+    html.Div([
+        dcc.Graph(id='precision-recall-f1')
+    ]),
+
+    html.Div(id='final-interpretation', style={'margin': '30px', 'padding': '20px', 'border': '1px solid gray'})
+])
+
+@app.callback(
+    [Output('summary-cards', 'children'),
+     Output('dice-donuts', 'figure'),
+     Output('hd95-donuts', 'figure'),
+     Output('volume-hd95', 'figure'),
+     Output('volume-dice', 'figure'),
+     Output('volume-errors-combined', 'figure'),
+     Output('fpfn-simple-donut-bg', 'figure'),
+     Output('fpfn-detailed-donut-bg', 'figure'),
+     Output('fpfn-simple-donut-nc', 'figure'),
+     Output('fpfn-detailed-donut-nc', 'figure'),
+     Output('fpfn-simple-donut-ed', 'figure'),
+     Output('fpfn-detailed-donut-ed', 'figure'),
+     Output('fpfn-simple-donut-et', 'figure'),
+     Output('fpfn-detailed-donut-et', 'figure'),
+     Output('precision-recall-f1', 'figure'),
+     Output('final-interpretation', 'children')],
+    [Input('csv-selector', 'value'),
+     Input('dice-threshold', 'value'),
+     Input('hd95-threshold', 'value')]
+)
+def update_dashboard(csv_file, dice_thresh, hd95_thresh):
+    df = load_data(csv_file)
+
+    avg_dice = df[["ET_Dice", "WT_Dice", "TC_Dice"]].mean()
+    avg_hd95 = df[["ET_HD95", "WT_HD95", "TC_HD95"]].mean()
+
+    def card(title, value, color):
+        return html.Div([
+            html.H4(title),
+            html.H2(f"{value:.2f}", style={'color': color})
+        ], style={'border': '1px solid lightgray', 'padding': '10px', 'borderRadius': '10px', 'width': '30%', 'textAlign': 'center'})
+
+    cards = [
+        card("Avg ET Dice", avg_dice['ET_Dice'], 'green'),
+        card("Avg WT Dice", avg_dice['WT_Dice'], 'blue'),
+        card("Avg TC Dice", avg_dice['TC_Dice'], 'orange')
+    ]
+
+    donut_data = {cls: (df[f"{cls}_Dice"] > dice_thresh).mean()*100 for cls in ['ET', 'WT', 'TC']}
+    dice_fig = make_donut(donut_data, f"Samples Passing Dice > {dice_thresh}")
+
+    hd95_data = {cls: (df[f"{cls}_HD95"] < hd95_thresh).mean()*100 for cls in ['ET', 'WT', 'TC']}
+    hd95_fig = make_donut(hd95_data, f"Samples Passing HD95 < {hd95_thresh}mm")
+
+    fig_vol_hd = px.scatter(df, x="ET_Volume", y="ET_HD95", color="ET_Dice", title="ET Volume vs HD95")
+    fig_vol_dice = px.scatter(df, x="ET_Volume", y="ET_Dice", color="ET_HD95", title="ET Volume vs Dice")
+
+    combined_errors_df = pd.DataFrame({
+        'Volume': pd.concat([df['ET_Volume'], df['ET_Volume'], df['ET_Volume'], df['ED_Volume'], df['ED_Volume'], df['ED_Volume'], df['NC_Volume'], df['NC_Volume'], df['NC_Volume'], df['BG_Volume'], df['BG_Volume'], df['BG_Volume']]),
+        'Count': pd.concat([df['ET_TP'], df['ET_FP'], df['ET_FN'], df['ED_TP'], df['ED_FP'], df['ED_FN'], df['NC_TP'], df['NC_FP'], df['NC_FN'], df['BG_TP'], df['BG_FP'], df['BG_FN']]),
+        'Type': (['ET_TP']*len(df) + ['ET_FP']*len(df) + ['ET_FN']*len(df) + ['ED_TP']*len(df) + ['ED_FP']*len(df) + ['ED_FN']*len(df) + ['NC_TP']*len(df) + ['NC_FP']*len(df) + ['NC_FN']*len(df) + ['BG_TP']*len(df) + ['BG_FP']*len(df) + ['BG_FN']*len(df))
+    })
+
+    fig_errors_combined = px.scatter(
+        combined_errors_df, x="Volume", y="Count", color="Type",
+        title="Volume vs TP / FP / FN across all tissues"
+    )
+    fig_errors_combined.update_layout(xaxis_title="Volume", yaxis_title="Count")
+
+    fpfn_simple_bg = make_simple_fpfn_donut(df, 'BG')
+    fpfn_detailed_bg = make_detailed_fpfn_donut(df, 'BG')
+    fpfn_simple_nc = make_simple_fpfn_donut(df, 'NC')
+    fpfn_detailed_nc = make_detailed_fpfn_donut(df, 'NC')
+    fpfn_simple_ed = make_simple_fpfn_donut(df, 'ED')
+    fpfn_detailed_ed = make_detailed_fpfn_donut(df, 'ED')
+    fpfn_simple_et = make_simple_fpfn_donut(df, 'ET')
+    fpfn_detailed_et = make_detailed_fpfn_donut(df, 'ET')
+
+    precision, recall, f1s = [], [], []
+    for cls in ['BG', 'NC', 'ED', 'ET']:
+        TP = df[f"{cls}_TP"].sum()
+        FP = df[f"{cls}_FP"].sum()
+        FN = df[f"{cls}_FN"].sum()
+        precision.append(TP / (TP + FP + 1e-6))
+        recall.append(TP / (TP + FN + 1e-6))
+        f1s.append(2*(precision[-1]*recall[-1])/(precision[-1]+recall[-1]+1e-6))
+
+    prf_fig = go.Figure()
+    classes = ['BG', 'NC', 'ED', 'ET']
+    prf_fig.add_trace(go.Bar(x=classes, y=precision, name='Precision'))
+    prf_fig.add_trace(go.Bar(x=classes, y=recall, name='Recall'))
+    prf_fig.add_trace(go.Bar(x=classes, y=f1s, name='F1'))
+    prf_fig.update_layout(barmode='group', title="Precision, Recall, F1 Score per Class")
+
+    notes = []
+    if min(precision) < 0.7:
+        notes.append("\U0001F50D Low precision detected - model may over-segment!")
+    if min(recall) < 0.7:
+        notes.append("\u26A0\uFE0F Low recall detected - model may miss tumors!")
+    if avg_dice.mean() < 0.8:
+        notes.append("\U0001F4C9 Overall Dice is moderate, possible room for improvement.")
+    if avg_hd95.mean() > 7:
+        notes.append("\U0001F6A8 High HD95 detected, especially for small tumors.")
+
+    return cards, dice_fig, hd95_fig, fig_vol_hd, fig_vol_dice, fig_errors_combined, fpfn_simple_bg, fpfn_detailed_bg, fpfn_simple_nc, fpfn_detailed_nc, fpfn_simple_ed, fpfn_detailed_ed, fpfn_simple_et, fpfn_detailed_et, prf_fig, html.Ul([html.Li(n) for n in notes])
+
+def make_donut(data_dict, title):
+    fig = go.Figure()
+    for i, (cls, val) in enumerate(data_dict.items()):
+        fig.add_trace(go.Pie(labels=["Pass", "Fail"], values=[val, 100-val], name=cls, hole=0.5,
+                             domain={'column': i}))
+    fig.update_layout(title_text=title, grid={'rows': 1, 'columns': len(data_dict)})
+    return fig
+
+def make_simple_fpfn_donut(df, class_name):
+    total_fp = df[f"{class_name}_FP"].sum()
+    total_fn = df[f"{class_name}_FN"].sum()
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=["False Positive", "False Negative"], values=[total_fp, total_fn], hole=0.5))
+    fig.update_layout(title_text=f"{class_name}: FP vs FN (Overall)", showlegend=True)
+    return fig
+
+def make_detailed_fpfn_donut(df, class_name):
+    class_idx = {'BG': 0, 'NC': 1, 'ED': 2, 'ET': 3}
+    idx = class_idx[class_name]
+
+    fp_parts = {
+        f"{gt}→{class_name}": df[f"conf_{gt}_{class_name}"].sum()
+        for gt in ['BG', 'NC', 'ED', 'ET'] if gt != class_name
+    }
+    fn_parts = {
+        f"{class_name}→{pred}": df[f"conf_{class_name}_{pred}"].sum()
+        for pred in ['BG', 'NC', 'ED', 'ET'] if pred != class_name
+    }
+
+    labels = list(fp_parts.keys()) + list(fn_parts.keys())
+    values = list(fp_parts.values()) + list(fn_parts.values())
+
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=labels, values=values, hole=0.4))
+    fig.update_layout(title_text=f"{class_name}: Detailed FP/FN Breakdown", showlegend=True)
+    return fig

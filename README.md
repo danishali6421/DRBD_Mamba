@@ -24,4 +24,22 @@ The model integrates dual-resolution bidirectional Mamba blocks within a 3D enco
   <img src="paper_figs/image.png" width="900">
 </p>
 
+## 🔧 Environment Setup
+
+We recommend using a dedicated virtual environment.
+
+```bash
+# Create virtual environment
+python3 -m venv drbd_mamba_env
+
+# Activate environment
+source drbd_mamba_env/bin/activate
+
+# Upgrade pip
+pip install --upgrade pip
+
+# Install dependencies
+pip install -r requirements.txt
+
+
 

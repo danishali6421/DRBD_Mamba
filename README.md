@@ -43,7 +43,7 @@ pip install -r requirements.txt
 ```
 ## 🧠 Stage 1: DRBD-Mamba Training
 
-To train the VQ-VAE component, edit `run.sh` and ensure:
+To train the DRBD-Mamba, edit `run.sh` and ensure:
 
 - `--VQVAE` is **enabled**
 - `--vqvae_training` is **enabled**
@@ -62,9 +62,9 @@ VQVAETRAINING="--vqvae_training"
 bash run.sh
 ```
 ## Stage 2: Inference Using the Trained DRBD-Mamba
+To run inference on the trained DRBD-Mamba model, edit `run.sh` and ensure that VQVAETRAINING is disabled:
+### Example configuration
 ```
-Edit run.sh and disable training:
-
 # VQVAETRAINING="--vqvae_training"
 bash run.sh
 ```

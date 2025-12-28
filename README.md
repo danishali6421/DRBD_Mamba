@@ -40,8 +40,8 @@ pip install --upgrade pip
 
 # Install dependencies
 pip install -r requirements.txt
-
-## Stage 1: VQ-VAE Training
+```
+## 🧠 Stage 1: DRBD-Mamba Training
 
 To train the VQ-VAE component, edit `run.sh` and ensure:
 
@@ -49,7 +49,8 @@ To train the VQ-VAE component, edit `run.sh` and ensure:
 - `--vqvae_training` is **enabled**
 - Other training flags (LDM, conditional training) are disabled
 
-Example:
+### Example configuration
+
 ```bash
 VQVAE="--VQVAE"
 VQVAETRAINING="--vqvae_training"
@@ -59,26 +60,12 @@ VQVAETRAINING="--vqvae_training"
 # CONDTRAINING="--cond_training"
 
 bash run.sh
+```
+## Stage 2: Inference Using the Trained DRBD-Mamba
+```
+Edit run.sh and disable training:
 
-
-This makes your pipeline **explicit**.
-
----
-
-## 4️⃣ Inference using the trained VQ-VAE
-
-Now explain inference cleanly.
-
-```markdown
-### Stage 2: Inference with Trained VQ-VAE
-
-After VQ-VAE training is completed:
-
-1. Edit `run.sh`
-2. Comment out the training flag:
-```bash
 # VQVAETRAINING="--vqvae_training"
-
-
-
+bash run.sh
+```
 

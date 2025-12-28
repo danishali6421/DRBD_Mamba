@@ -41,7 +41,7 @@ pip install --upgrade pip
 # Install dependencies
 pip install -r requirements.txt
 
-**## Stage 1: VQ-VAE Training**
+## Stage 1: VQ-VAE Training
 
 To train the VQ-VAE component, edit `run.sh` and ensure:
 

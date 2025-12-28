@@ -24,7 +24,7 @@ The model integrates dual-resolution bidirectional Mamba blocks within a 3D enco
   <img src="paper_figs/image.png" width="900">
 </p>
 
-## 🔧 Environment Setup
+## Environment Setup
 
 We recommend using a dedicated virtual environment.
 
@@ -41,7 +41,7 @@ pip install --upgrade pip
 # Install dependencies
 pip install -r requirements.txt
 
-### Stage 1: VQ-VAE Training
+**## Stage 1: VQ-VAE Training**
 
 To train the VQ-VAE component, edit `run.sh` and ensure:
 

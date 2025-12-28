@@ -21,7 +21,7 @@ The overall architecture of **DRBD-Mamba** is illustrated below.
 The model integrates dual-resolution bidirectional Mamba blocks within a 3D encoder–decoder framework, combined with Morton space-filling curve (SFC) ordering and a vector quantization (VQ) module for latent regularization.
 
 <p align="center">
-  <img src="paper_figs/Figure_1.pdf" width="900">
+  <img src="paper_figs/image.png" width="900">
 </p>
 
 

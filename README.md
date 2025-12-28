@@ -2,8 +2,7 @@
 
 This repository provides the official PyTorch implementation of **DRBD-Mamba**, a dual-resolution bi-directional Mamba-based architecture for 3D brain tumor segmentation from multimodal MRI scans.
 
-The code is released to support **reproducibility, transparency, and further research**, and corresponds to the experiments reported in our journal submission to *Biomedical Signal Processing and Control*.
-
+The code is released to support **reproducibility, transparency, and further research**, and corresponds to the experiments reported in our paper.
 ---
 
 ## 📌 Key Features
